@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reactive.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reactive.Linq;
 using Esri.ArcGISRuntime.UI.Controls;
-using LanguageExt;
-
 using Map = Esri.ArcGISRuntime.Mapping.Map;
 
 namespace Crasherator3000
@@ -19,31 +12,30 @@ namespace Crasherator3000
             _mapView = mapView;
 
             Observable.Interval(TimeSpan.FromMilliseconds(1)).Do(_ => EnumerateMapLayers()).Subscribe();
-
-            Observable.Interval(TimeSpan.FromMilliseconds(1.11)).Do(_ => EnumerateMapLayers()).Subscribe();
-            Observable.Interval(TimeSpan.FromMilliseconds(1.21)).Do(_ => EnumerateMapLayers()).Subscribe();
-            Observable.Interval(TimeSpan.FromMilliseconds(1.31)).Do(_ => EnumerateMapLayers()).Subscribe();
-            Observable.Interval(TimeSpan.FromMilliseconds(1.51)).Do(_ => EnumerateMapLayers()).Subscribe();
         }
 
-        public void EnumerateMapLayers()
+        private void EnumerateMapLayers()
         {
-            var lines = Map().SelectMany(m => m.AllLayers).Select(l => l.Name).Select(l => l.ToUpper());
+            if (Map() is { } map) {
 
-            foreach (var line in lines)
-            {
-                Console.WriteLine(line);
+                var lines = map.AllLayers
+                    .Select(l => l.Name)
+                    .Select(l => l.ToUpper());
+
+                foreach (var line in lines)
+                {
+                    Console.WriteLine(line);
+                }
             }
         }
 
-        private Option<Map> Map() => Prelude.Optional(GetMapFromUiThread());
+        private Map? Map() => GetMapFromUiThread();
 
         private Map? GetMapFromUiThread()
         {
             try
             {
-                Map? map = _mapView.Dispatcher.Invoke(() => _mapView?.Map);
-                return map;
+                return _mapView.Dispatcher.Invoke(() => _mapView?.Map);
             }
             catch (TaskCanceledException)
             {
